@@ -54,7 +54,11 @@ public struct Index: ~Copyable, Sendable {
     ///
     /// - Note: Vectors are automatically normalized on insertion, making cosine similarity and dot product equivalent.
     ///         This means Euclidean distance cannot be used with this implementation.
-    public init(_ vectorDim: Int, quantization: Quantization? = nil, m: Int = 0) throws(IndexError) {
+    public init(
+        _ vectorDim: Int,
+        quantization: Quantization? = nil,
+        m: Int = 0
+    ) throws(IndexError) {
         precondition(vectorDim > 0, "vectorDim must be greater than 0, got \(vectorDim)")
 
         let quantizationRaw: UInt32 =
@@ -346,7 +350,11 @@ extension Index {
     /// - Note: This operation blocks all concurrent searches. For high-throughput scenarios,
     ///         consider using the optimistic insertion API (`prepareInsert`/`commitInsert`).
     @discardableResult
-    public func insert(_ array: [Float], nodeId: Int = 0, ef: Int = 200) throws(IndexError) -> Node {
+    public func insert(
+        _ array: [Float],
+        nodeId: Int = 0,
+        ef: Int = 200
+    ) throws(IndexError) -> Node {
         precondition(array.count == vectorDim)
         let nodePtr = array.span.withUnsafeBufferPointer { buffer in
             CHNSW.hnsw_insert(ptr, buffer.baseAddress, nil, 0, UInt64(nodeId), nil, Int32(ef))
