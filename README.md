@@ -1,4 +1,7 @@
-# swift-hnsw
+# `swift-hnsw`
+
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fjkrukowski%2Fswift-hnsw%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/jkrukowski/swift-hnsw)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fjkrukowski%2Fswift-hnsw%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/jkrukowski/swift-hnsw)
 
 A Swift wrapper around high-performance [Redis HNSW implementation](https://github.com/redis/redis/blob/unstable/modules/vector-sets/hnsw.h) for approximate nearest neighbor search in vector spaces.
 

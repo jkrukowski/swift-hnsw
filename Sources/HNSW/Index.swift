@@ -54,7 +54,7 @@ public struct Index: ~Copyable, Sendable {
     ///
     /// - Note: Vectors are automatically normalized on insertion, making cosine similarity and dot product equivalent.
     ///         This means Euclidean distance cannot be used with this implementation.
-    public init(_ vectorDim: Int, quantization: Quantization? = nil, m: Int = 0) throws {
+    public init(_ vectorDim: Int, quantization: Quantization? = nil, m: Int = 0) throws(IndexError) {
         precondition(vectorDim > 0, "vectorDim must be greater than 0, got \(vectorDim)")
 
         let quantizationRaw: UInt32 =
@@ -116,7 +116,7 @@ extension Index {
     ///   - Layer-specific link counts and neighbor IDs
     ///   - Worst link distance information for each layer
     ///   - L2 norm and quantization range metadata
-    public func serialize(_ node: borrowing Node) throws -> SerializedNode {
+    public func serialize(_ node: borrowing Node) throws(IndexError) -> SerializedNode {
         guard let nodePtr = CHNSW.hnsw_serialize_node(ptr, node.ptr) else {
             throw IndexError.nodeSerializationFailed
         }
@@ -137,7 +137,7 @@ extension Index {
     ///
     /// - Note: The serialized data can be restored using `Index.deserialize(from:)`.
     ///         The format includes version information to ensure compatibility.
-    public func serialize() throws -> [UInt8] {
+    public func serialize() throws(IndexError) -> [UInt8] {
         var data = [UInt8]()
 
         // Serialize version and index metadata
@@ -204,7 +204,7 @@ extension Index {
     ///
     /// - Note: The deserialized index will have the same vector dimension, quantization type,
     ///         and M parameter as the original index.
-    public static func deserialize(from data: [UInt8]) throws -> Index {
+    public static func deserialize(from data: [UInt8]) throws(IndexError) -> Index {
         // Minimum size: 4 UInt64 values (version, vectorDim, nodeCount, quantization)
         guard data.count >= 32 else {
             throw IndexError.deserializationFailed
@@ -306,7 +306,7 @@ extension Index {
     public func insertSerialized(
         _ vectorData: [UInt8],
         params: [UInt64]
-    ) throws -> Node {
+    ) throws(IndexError) -> Node {
         let nodePtr = vectorData.span.withUnsafeBufferPointer { buffer in
             params.withUnsafeBufferPointer { paramsBuffer in
                 CHNSW.hnsw_insert_serialized(
@@ -346,7 +346,7 @@ extension Index {
     /// - Note: This operation blocks all concurrent searches. For high-throughput scenarios,
     ///         consider using the optimistic insertion API (`prepareInsert`/`commitInsert`).
     @discardableResult
-    public func insert(_ array: [Float], nodeId: Int = 0, ef: Int = 200) throws -> Node {
+    public func insert(_ array: [Float], nodeId: Int = 0, ef: Int = 200) throws(IndexError) -> Node {
         precondition(array.count == vectorDim)
         let nodePtr = array.span.withUnsafeBufferPointer { buffer in
             CHNSW.hnsw_insert(ptr, buffer.baseAddress, nil, 0, UInt64(nodeId), nil, Int32(ef))
@@ -431,7 +431,7 @@ extension Index {
     ///
     /// - Note: After deletion, the node reference becomes invalid and should not be used.
     ///         Any existing search results containing this node should be discarded.
-    public func delete(_ node: Node) throws {
+    public func delete(_ node: Node) throws(IndexError) {
         if CHNSW.hnsw_delete_node(ptr, node.ptr, nil) == 0 {
             throw IndexError.nodeDeletionFailed
         }
@@ -497,7 +497,7 @@ extension Index {
         _ query: [Float],
         k: Int = 3,
         isQueryVectorNormalized: Bool = false
-    ) throws -> [SearchResult] {
+    ) throws(IndexError) -> [SearchResult] {
         let slot = try acquireReadSlot()
         defer { releaseReadSlot(slot) }
         return search(query, k: k, slot: slot, isQueryVectorNormalized: isQueryVectorNormalized)
@@ -564,7 +564,7 @@ extension Index {
     /// - Returns: The acquired slot number (0-31).
     ///
     /// - Throws: `IndexError.acquireReadSlotFailed` if the slot cannot be acquired.
-    private func acquireReadSlot() throws -> Int {
+    private func acquireReadSlot() throws(IndexError) -> Int {
         let result = Int(CHNSW.hnsw_acquire_read_slot(ptr))
         if result == -1 {
             throw IndexError.acquireReadSlotFailed
